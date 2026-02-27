@@ -13,18 +13,18 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Detect frameworks & tools
+      - name: Detect frameworks, tools & libraries
         id: detect
         run: |
           TOPICS=""
 
-          # --- Front-end frameworks & libraries ---
+          # --- Front-end ---
           grep -q '"react"' package.json && TOPICS="$TOPICS,React"
           grep -q '"vue"' package.json && TOPICS="$TOPICS,Vue.js"
           grep -q '"tailwindcss"' package.json && TOPICS="$TOPICS,TailwindCSS"
           grep -q '"bootstrap"' package.json && TOPICS="$TOPICS,Bootstrap"
 
-          # --- Back-end frameworks & tools ---
+          # --- Back-end ---
           grep -q '"express"' package.json && TOPICS="$TOPICS,Express"
           grep -q '"django"' requirements.txt && TOPICS="$TOPICS,Django"
           grep -q '"flask"' requirements.txt && TOPICS="$TOPICS,Flask"
@@ -32,18 +32,18 @@ jobs:
           grep -q '"jwt"' package.json && TOPICS="$TOPICS,JWT"
           grep -q '"rest"' package.json && TOPICS="$TOPICS,API-REST"
 
-          # --- Databases ---
+          # --- Bases de données ---
           grep -q '"sqlite3"' package.json && TOPICS="$TOPICS,SQLite"
           grep -q '"pg"' package.json && TOPICS="$TOPICS,PostgreSQL"
           grep -q '"mysql"' package.json && TOPICS="$TOPICS,MySQL"
           grep -q '"mongodb"' package.json && TOPICS="$TOPICS,MongoDB"
 
-          # --- Data & AI ---
+          # --- Data & IA (Kaggle stack) ---
           [ -f requirements.txt ] && grep -q 'numpy' requirements.txt && TOPICS="$TOPICS,NumPy"
           [ -f requirements.txt ] && grep -q 'pandas' requirements.txt && TOPICS="$TOPICS,Pandas"
+          [ -f requirements.txt ] && grep -q 'scikit-learn' requirements.txt && TOPICS="$TOPICS,Scikit-learn"
           [ -f requirements.txt ] && grep -q 'tensorflow' requirements.txt && TOPICS="$TOPICS,TensorFlow"
           [ -f requirements.txt ] && grep -q 'pytorch' requirements.txt && TOPICS="$TOPICS,PyTorch"
-          [ -f requirements.txt ] && grep -q 'scikit-learn' requirements.txt && TOPICS="$TOPICS,Scikit-learn"
           [ -f requirements.txt ] && grep -q 'keras' requirements.txt && TOPICS="$TOPICS,Keras"
           [ -f requirements.txt ] && grep -q 'matplotlib' requirements.txt && TOPICS="$TOPICS,Matplotlib"
           [ -f requirements.txt ] && grep -q 'seaborn' requirements.txt && TOPICS="$TOPICS,Seaborn"
@@ -59,7 +59,7 @@ jobs:
           grep -q 'terraform' README.md && TOPICS="$TOPICS,Terraform"
           grep -q 'ci/cd' README.md && TOPICS="$TOPICS,CI/CD"
 
-          # --- Systems & Tools ---
+          # --- Outils & écosystème ---
           grep -q 'n8n' README.md && TOPICS="$TOPICS,n8n"
           grep -q 'Notion' README.md && TOPICS="$TOPICS,Notion"
           grep -q 'Figma' README.md && TOPICS="$TOPICS,Figma"
