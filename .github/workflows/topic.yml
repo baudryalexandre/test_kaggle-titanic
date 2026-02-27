@@ -37,7 +37,6 @@ jobs:
         run: |
           TOPICS_JS=""
           if [ -f package.json ]; then
-            # dependencies
             DEP=$(jq -r '.dependencies // {} | keys[]' package.json)
             DEV_DEP=$(jq -r '.devDependencies // {} | keys[]' package.json)
             for lib in $DEP $DEV_DEP; do
@@ -48,11 +47,13 @@ jobs:
           echo "JS_TOPICS=$TOPICS_JS" >> $GITHUB_ENV
           echo "Detected JS topics: $TOPICS_JS"
 
-      - name: Merge topics
+      - name: Merge topics and limit to 20
         run: |
           ALL_TOPICS=$(echo "$PYTHON_TOPICS$JS_TOPICS" | sed 's/^,//; s/,,/,/g')
+          # Split, unique, take first 20
+          ALL_TOPICS=$(echo $ALL_TOPICS | tr ',' '\n' | sort | uniq | head -n 20 | tr '\n' ',' | sed 's/,$//')
           echo "TOPICS=$ALL_TOPICS" >> $GITHUB_ENV
-          echo "All topics to set: $ALL_TOPICS"
+          echo "All topics to set (limited to 20): $ALL_TOPICS"
 
       - name: Debug secret
         run: |
