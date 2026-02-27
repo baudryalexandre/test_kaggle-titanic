@@ -11,39 +11,65 @@ jobs:
   update-topics:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Detect Python libraries dynamically
-        id: detect
+      - name: Detect Python libraries
+        id: detect-python
         run: |
           TOPICS=""
 
           if [ -f requirements.txt ]; then
             while IFS= read -r line; do
-              # Supprimer espaces en début/fin
-              line=$(echo "$line" | xargs)
-              # Ignorer les lignes vides ou commentaires
-              if [ -z "$line" ] || [[ "$line" =~ ^# ]]; then
-                continue
-              fi
-              # Extraire le nom avant == ou > ou <
-              LIB=$(echo "$line" | sed -E 's/[<>=].*//')
-              # Remplacer underscores par tirets
-              LIB_FORMATTED=$(echo "$LIB" | sed 's/_/-/g' | awk '{print toupper(substr($0,1,1)) substr($0,2)}')
-              TOPICS="$TOPICS,$LIB_FORMATTED"
+              line=$(echo "$line" | xargs)  # trim spaces
+              [[ -z "$line" || "$line" =~ ^# ]] && continue
+              LIB=$(echo "$line" | sed -E 's/[<>=].*//') # nom sans version
+              LIB=$(echo "$LIB" | sed 's/_/-/g' | awk '{print toupper(substr($0,1,1)) substr($0,2)}')
+              TOPICS="$TOPICS,$LIB"
             done < requirements.txt
           fi
 
-          # Nettoyage
-          TOPICS=$(echo $TOPICS | sed 's/^,//; s/,,/,/g')
-          echo "TOPICS=$TOPICS" >> $GITHUB_ENV
+          echo "PYTHON_TOPICS=$TOPICS" >> $GITHUB_ENV
+          echo "Detected Python topics: $TOPICS"
+
+      - name: Detect JS/Node libraries
+        id: detect-js
+        run: |
+          TOPICS_JS=""
+          if [ -f package.json ]; then
+            # dependencies
+            DEP=$(jq -r '.dependencies // {} | keys[]' package.json)
+            DEV_DEP=$(jq -r '.devDependencies // {} | keys[]' package.json)
+            for lib in $DEP $DEV_DEP; do
+              LIB=$(echo "$lib" | sed 's/_/-/g' | awk '{print toupper(substr($0,1,1)) substr($0,2)}')
+              TOPICS_JS="$TOPICS_JS,$LIB"
+            done
+          fi
+          echo "JS_TOPICS=$TOPICS_JS" >> $GITHUB_ENV
+          echo "Detected JS topics: $TOPICS_JS"
+
+      - name: Merge topics
+        run: |
+          ALL_TOPICS=$(echo "$PYTHON_TOPICS$JS_TOPICS" | sed 's/^,//; s/,,/,/g')
+          echo "TOPICS=$ALL_TOPICS" >> $GITHUB_ENV
+          echo "All topics to set: $ALL_TOPICS"
+
+      - name: Debug secret
+        run: |
+          if [ -z "${{ secrets.PAT_GITHUB }}" ]; then
+            echo "PAT_GITHUB is empty!"
+            exit 1
+          else
+            echo "PAT_GITHUB exists"
+          fi
 
       - name: Set repository topics
         uses: actions/github-script@v6
         with:
-          github-token: ${{ secrets.PAT_GITHUB }}   # ← ton secret existant
+          github-token: ${{ secrets.PAT_GITHUB }}
           script: |
-            const topics = process.env.TOPICS.split(',').map(t => t.trim());
+            const topics = process.env.TOPICS.split(',').map(t => t.trim()).filter(t => t.length > 0);
+            console.log("Setting topics:", topics);
             await github.rest.repos.replaceAllTopics({
               owner: context.repo.owner,
               repo: context.repo.repo,
