@@ -41,7 +41,7 @@ jobs:
       - name: Set repository topics
         uses: actions/github-script@v6
         with:
-          github-token: ${{ secrets.PAT_GITHUB }}
+          github-token: ${{ secrets.PAT_GITHUB }}   # ← ton secret existant
           script: |
             const topics = process.env.TOPICS.split(',').map(t => t.trim());
             await github.rest.repos.replaceAllTopics({
