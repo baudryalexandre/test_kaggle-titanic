@@ -1,3 +1,4 @@
+# .github/workflows/update-topics.yml
 name: Update Topics
 
 on:
@@ -17,21 +18,23 @@ jobs:
         run: |
           TOPICS=""
 
-          # Scanner toutes les librairies du requirements.txt
           if [ -f requirements.txt ]; then
             while IFS= read -r line; do
-              # Extraire le nom de la librairie avant ==
-              LIB=$(echo "$line" | cut -d '=' -f 1)
+              # Supprimer espaces en début/fin
+              line=$(echo "$line" | xargs)
               # Ignorer les lignes vides ou commentaires
-              if [ -n "$LIB" ] && [[ ! "$LIB" =~ ^# ]]; then
-                # Remplacer les underscores par des tirets et capitaliser première lettre
-                LIB_FORMATTED=$(echo "$LIB" | sed 's/_/-/g' | awk '{print toupper(substr($0,1,1)) substr($0,2)}')
-                TOPICS="$TOPICS,$LIB_FORMATTED"
+              if [ -z "$line" ] || [[ "$line" =~ ^# ]]; then
+                continue
               fi
+              # Extraire le nom avant == ou > ou <
+              LIB=$(echo "$line" | sed -E 's/[<>=].*//')
+              # Remplacer underscores par tirets
+              LIB_FORMATTED=$(echo "$LIB" | sed 's/_/-/g' | awk '{print toupper(substr($0,1,1)) substr($0,2)}')
+              TOPICS="$TOPICS,$LIB_FORMATTED"
             done < requirements.txt
           fi
 
-          # Nettoyer la variable
+          # Nettoyage
           TOPICS=$(echo $TOPICS | sed 's/^,//; s/,,/,/g')
           echo "TOPICS=$TOPICS" >> $GITHUB_ENV
 
